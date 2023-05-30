@@ -16,15 +16,13 @@ def load_pickles(model_pickle_path, label_encoder_pickle_path):
 
 def pre_process_data(df, label_encoder_dict):
     df_out = df.copy()
-    try:
-        if "customerID" in df_out.columns:
-            df_out.drop("customerID", axis=1, inplace=True)
-    except:
-        pass
-
+    df_out.replace(" ", 0, inplace=True)
+    df_out.loc[:, "TotalCharges"] = pd.to_numeric(df_out.loc[:, "TotalCharges"])
+    if "customerID" in df_out.columns:
+        df_out.drop("customerID", axis=1, inplace=True)
     for column, le in label_encoder_dict.items():
-        df_out.loc[:, column] = le.transform(df_out.loc[:, column])
-    df_out.replace(" ", 0, inplace=True)  # replace empties
+        if column in df_out.columns:
+            df_out.loc[:, column] = le.transform(df_out.loc[:, column])
 
     return df_out
 
@@ -37,8 +35,7 @@ def make_predictions(test_data):
     )
 
     data_processed = pre_process_data(test_data, label_encoder_dict)
-    if "Churn" in data_processed.columns:
-        data_processed.drop("Churn", axis=1, inplace=True)
+
     prediction = model.predict(data_processed)
 
     return prediction
